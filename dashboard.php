@@ -6,7 +6,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$perfil = $_SESSION['user_perfil'];
+$perfil = $_SESSION['user_perfil']; 
 
 switch ($perfil) {
 
