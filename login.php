@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <style>
         body {
-            background-color: #f8f9fa;
+            background-color: #6585a7ff;
             display: flex;
             align-items: center;
             height: 100vh;
