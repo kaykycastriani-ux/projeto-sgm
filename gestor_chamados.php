@@ -1,266 +1,100 @@
-Você disse
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once 'config/database.php';
+
+// Busca os ambientes reais diretamente cadastrados no banco
+$query_ambientes = "SELECT id_ambiente, nome FROM ambientes ORDER BY nome ASC";
+$resultado_ambientes = $conn->query($query_ambientes);
+?>
 <!DOCTYPE html>
-
 <html lang="pt-br">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>SGM - Gestão de Chamados</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <title>SGM | Novo Chamado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-   
-
     <style>
-
-        body { background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
-
-        .navbar { background-color: #1a1d21 !important; border-bottom: 3px solid #0d6efd; padding: 1rem 0; }
-
-        .nav-link { color: #adb5bd !important; font-weight: 500; transition: 0.3s; border-radius: 8px; margin: 0 4px; }
-
-        .nav-link:hover, .nav-link.active { color: #fff !important; background: rgba(255,255,255,0.1); }
-
-        .card { border: none; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-
-        .btn-filter { border-radius: 50px; padding: 8px 20px; font-weight: 600; border-width: 2px; }
-
-        .status-badge { padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; }
-
-        .priority-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-
+        body { background-color: #f1f5f9; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .card-form { border: none; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); background: white; }
+        .form-control, .form-select { border-radius: 10px; padding: 12px; border: 1px solid #e2e8f0; }
+        .form-control:focus { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+        .btn-primary { background-color: #0f172a; border: none; border-radius: 12px; padding: 12px 25px; font-weight: 600; transition: 0.3s; }
+        .btn-primary:hover { background-color: #3b82f6; transform: translateY(-2px); }
     </style>
-
 </head>
-
 <body>
 
-
-
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow">
-
-        <div class="container">
-
-            <a class="navbar-brand fw-bold" href="gestor_dashboard.php">
-
-                <i class="bi bi-shield-fill-check text-primary me-2"></i>SGM ADMIN
-
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <a href="gestor_dashboard.php" class="text-decoration-none text-muted mb-4 d-inline-block">
+                <i class="bi bi-arrow-left me-2"></i>Voltar ao Painel
             </a>
 
-            <div class="navbar-nav ms-auto align-items-center">
-
-                <a class="nav-link" href="gestor_dashboard.php"><i class="bi bi-house-door-fill me-1"></i> Voltar</a>
-
-                <a class="nav-link active" href="gestor_chamados.php"><i class="bi bi-ticket-perforated-fill me-1"></i> Chamados</a>
-
-                <a class="nav-link text-danger ms-3" href="api/logout.php"><i class="bi bi-box-arrow-right"></i> Sair</a>
-
-            </div>
-
-        </div>
-
-    </nav>
-
-
-
-    <div class="container mt-4 pb-5">
-
-        <div class="d-flex justify-content-between align-items-center mb-4">
-
-            <h2 class="fw-bold m-0 text-dark text-uppercase" style="letter-spacing: -1px;">Controle de Chamados</h2>
-
-        </div>
-
-
-
-        <div class="mb-4 d-flex gap-2 flex-wrap">
-
-            <button class="btn btn-filter btn-outline-secondary" onclick="carregarChamados('')"><i class="bi bi-grid-1x2-fill me-2"></i>Todos</button>
-
-            <button class="btn btn-filter btn-outline-primary" onclick="carregarChamados('aberto')"><i class="bi bi-envelope-fill me-2"></i>Abertos</button>
-
-            <button class="btn btn-filter btn-outline-warning text-dark" onclick="carregarChamados('em_execucao')"><i class="bi bi-gear-wide-connected me-2"></i>Em Execução</button>
-
-            <button class="btn btn-filter btn-outline-success" onclick="carregarChamados('concluido')"><i class="bi bi-check-circle-fill me-2"></i>Concluídos</button>
-
-        </div>
-
-
-
-        <div class="card overflow-hidden">
-
-            <div class="table-responsive">
-
-                <table class="table table-hover align-middle mb-0">
-
-                    <thead class="table-light">
-
-                        <tr class="text-secondary small">
-
-                            <th class="ps-4">ID</th>
-
-                            <th>SOLICITANTE</th>
-
-                            <th>LOCAL / BLOCO</th>
-
-                            <th>PRIORIDADE</th>
-
-                            <th>TÉCNICO</th>
-
-                            <th>STATUS</th>
-
-                            <th class="text-center">AÇÕES</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody id="tabelaGeral">
-
-                        </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-
-        const confPrioridade = {
-
-            'urgente': 'bg-danger',
-
-            'alta': 'bg-warning',
-
-            'media': 'bg-primary',
-
-            'baixa': 'bg-secondary'
-
-        };
-
-       
-
-        const confStatus = {
-
-            'aberto': 'bg-secondary text-white',
-
-            'em_execucao': 'bg-warning text-dark',
-
-            'concluido': 'bg-success text-white',
-
-            'fechado': 'bg-dark text-white'
-
-        };
-
-
-
-        async function carregarChamados(status = '') {
-
-            const tabela = document.getElementById('tabelaGeral');
-
-            tabela.innerHTML = `<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>`;
-
-           
-
-            try {
-
-                const response = await fetch(`api/gestor_chamados.php?status=${status}`);
-
-                const chamados = await response.json();
-
-
-
-                if (chamados.length === 0) {
-
-                    tabela.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-muted">Nenhum chamado registrado com este status.</td></tr>`;
-
-                    return;
-
-                }
-
-
-
-                tabela.innerHTML = chamados.map(c => `
-
-                    <tr>
-
-                        <td class="ps-4 text-muted">#${c.id_chamado}</td>
-
-                        <td><div class="fw-bold">${c.solicitante_nome}</div></td>
-
-                        <td>
-
-                            <div class="fw-semibold text-dark">${c.ambiente_nome}</div>
-
-                            <div class="small text-muted">${c.bloco_nome}</div>
-
-                        </td>
-
-                        <td>
-
-                            <span class="priority-dot ${confPrioridade[c.prioridade]}"></span>
-
-                            <span class="small fw-bold text-uppercase">${c.prioridade}</span>
-
-                        </td>
-
-                        <td>
-
-                            <div class="d-flex align-items-center gap-2">
-
-                                <i class="bi bi-person-badge text-muted"></i>
-
-                                <span>${c.tecnico_nome || '<em class="text-muted">Não atribuído</em>'}</span>
-
+            <div class="card card-form p-4">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="icon-badge mb-3">
+                            <i class="bi bi-pencil-square text-primary" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h2 class="fw-800">Nova Solicitação</h2>
+                        <p class="text-muted">Preencha os detalhes para a equipe técnica</p>
+                    </div>
+                    
+                    <form action="processa_novo_chamado.php" method="POST" enctype="multipart/form-data">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-uppercase">Local / Bloco</label>
+                                <select class="form-select" name="id_ambiente" required>
+                                    <option value="" selected disabled>Selecione...</option>
+                                    <?php 
+                                    if ($resultado_ambientes && $resultado_ambientes->num_rows > 0) {
+                                        while($ambiente = $resultado_ambientes->fetch_assoc()) {
+                                            echo "<option value='".$ambiente['id_ambiente']."'>".$ambiente['nome']."</option>";
+                                        }
+                                    }
+                                    ?>
+                                </select>
                             </div>
 
-                        </td>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-uppercase">Prioridade</label>
+                                <select class="form-select" name="prioridade" required>
+                                    <option value="baixa">🟢 Baixa</option>
+                                    <option value="media" selected>🟡 Média</option>
+                                    <option value="alta">🟠 Alta</option>
+                                    <option value="urgente">🔴 Urgente</option>
+                                </select>
+                            </div>
 
-                        <td><span class="status-badge ${confStatus[c.status]}">${c.status.replace('_', ' ')}</span></td>
+                            <input type="hidden" name="id_tipo_servico" value="2">
 
-                        <td class="text-center">
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-uppercase">Assunto</label>
+                                <input type="text" class="form-control" name="assunto" placeholder="Resuma o problema" required>
+                            </div>
 
-                            <a href="gestor_detalhes.php?id=${c.id_chamado}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold shadow-sm">
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-uppercase">Descrição Detalhada</label>
+                                <textarea class="form-control" name="descricao" rows="4" placeholder="O que aconteceu?" required></textarea>
+                            </div>
 
-                                <i class="bi bi-pencil-square me-1"></i> GERENCIAR
-
-                            </a>
-
-                        </td>
-
-                    </tr>
-
-                `).join('');
-
-            } catch (error) {
-
-                tabela.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-5"><i class="bi bi-exclamation-triangle me-2"></i>Erro ao carregar dados da API.</td></tr>`;
-
-            }
-
-        }
-
-
-
-        // Início automático
-
-        carregarChamados();
-
-    </script>
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-primary w-100 shadow">
+                                    <i class="bi bi-check2-circle me-2"></i>Confirmar e Abrir Chamado
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
-
 </html>
